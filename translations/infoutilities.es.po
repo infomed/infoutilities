@@ -1,0 +1,130 @@
+# $Id$
+#
+# Spanish translation of Drupal (general)
+# Copyright YEAR NAME <EMAIL@ADDRESS>
+# Generated from files:
+#  infoutilities.module: n/a
+#  infoutilities.info: n/a
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Infoutilities\n"
+"POT-Creation-Date: 2008-11-10 09:54-0500\n"
+"PO-Revision-Date: 2009-08-11 11:01-0500\n"
+"Last-Translator: yazna <yazna@infomed.sld.cu>\n"
+"Language-Team: Infomed\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n!=1);\n"
+
+#: infoutilities.module:33;36 infoutilities.info:0
+msgid "Includes themes, forms and functions that are common to modules from Infomed package."
+msgstr ""
+"Incluye temas, formularios y funciones comunes a los módulos del "
+"paquete Infomed."
+
+#: infoutilities.module:38
+msgid "There are some modules in the Infomed package that have blocks to show a list of items with a link to see more..., and that when you click on one of their items, its complete information is shown (for example:an event or a post). When making click on see more... or on an item, the information is shown in the content region of the page. In this option you can select the regions that you want to hide when this information is shown."
+msgstr "En el paquete Infomed hay módulos que tienen bloques donde se presenta un listado de enlaces con la opción de ver mas..., es decir ver este listado ampliado, además cuando se da click sobre uno de los enlaces del listado se muestra toda su información (por ej: una entrada o un evento). El listado completo o el elemento seleccionado se muestra en la región 'content' de la página. En esta opción usted puede seleccionar las regiones que desea ocultar cuando se muestre esta información en 'content'. "
+
+#: infoutilities.module:196
+msgid "Operations"
+msgstr "Operaciones"
+
+#: infoutilities.module:198
+msgid "Regions to Clean"
+msgstr "Ocultar Regiones"
+
+#: infoutilities.module:201
+msgid "No regions to clean"
+msgstr "No ocultar ninguna región"
+
+#: infoutilities.module:204
+msgid "edit"
+msgstr "editar"
+
+#: infoutilities.module:228
+msgid "Select which regions do you want to hide when the full list of items or full post or full event are displayed on 'content'."
+msgstr "Seleccione las regiones que desea ocultar cuando al dar ver mas... se muestre el listado ampliado o cuando se muestre toda la informaci�n de un elememnto de la lista en la región 'content'."
+
+#: infoutilities.module:242
+msgid "Submit"
+msgstr "Guardar"
+
+#: infoutilities.module:146;398
+msgid "« first"
+msgstr "« primera"
+
+#: infoutilities.module:147;399
+msgid "‹ previous"
+msgstr "‹ anterior"
+
+#: infoutilities.module:148;400
+msgid "next ›"
+msgstr "siguiente ›"
+
+#: infoutilities.module:149;401
+msgid "last »"
+msgstr "última »"
+
+#: infoutilities.module:398
+msgid "Go to first page"
+msgstr "Ir a la primera página"
+
+#: infoutilities.module:399
+msgid "Go to previous page"
+msgstr "Ir a página anterior"
+
+#: infoutilities.module:400
+msgid "Go to next page"
+msgstr "Ir a página siguiente"
+
+#: infoutilities.module:401
+msgid "Go to last page"
+msgstr "Ir a la última página"
+
+#: infoutilities.module:408
+msgid "Go to page @number"
+msgstr "Ir a la página @number"
+
+#: infoutilities.module:549
+msgid "Save permissions"
+msgstr "Guardar permisos"
+
+#: infoutilities.module:586
+msgid "The changes have been saved."
+msgstr "Se han guardado los cambios."
+
+#: infoutilities.info:0
+msgid "Infoutilities"
+msgstr "Infoutilities"
+
+#: infoutilities.info:0
+msgid "Infomed"
+msgstr "Infomed"
+
+#: infoutilities.module:99
+msgid "administer infoutilities"
+msgstr "administrar infoutilities"
+
+#: infoutilities.module:99
+msgid "configure infoutilities"
+msgstr "configurar infoutilities"
+
+#: infoutilities.module:71
+msgid "Administer Infoutilities"
+msgstr "Administrar Infoutilities"
+
+#: infoutilities.module:76
+msgid "Permissions"
+msgstr "Permisos"
+
+#: infoutilities.module:85
+msgid "Settings"
+msgstr "Opciones"
+
+#: infoutilities.module:85
+msgid "edit clean regions setting"
+msgstr "editar opción de ocultar regiones"

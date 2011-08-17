@@ -1,0 +1,38 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function infoutilities_install() {
+  //clean regions for full post and more...
+  if ( variable_get('theme_default', 'garland') == 'infotemacidesplegable') {
+    $clean_regions = array('content_top', 'content_bottom');
+    variable_set('infoutilities_clean_regions', $clean_regions);
+  }
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function infoutilities_uninstall() {
+  variable_del('infoutilities_clean_regions');
+}
+
+/**
+ * Implementation of hook_update().
+ *
+ * Set regions to clean when infotemacidesplegable is a default theme
+ */
+function infoutilities_update_6001() {
+  $ret = array();
+  //clean regions for full post and more...
+  $iwp_cr = variable_get('infowordpress_clean_regions', array());
+  if ( $iwp_cr ) {
+    variable_set('infoutilities_clean_regions', $iwp_cr);
+  }
+  elseif ( variable_get('theme_default', 'garland') == 'infotemacidesplegable') {
+    $clean_regions = array('content_top', 'content_bottom');
+    variable_set('infoutilities_clean_regions', $clean_regions);
+  }
+}

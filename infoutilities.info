@@ -1,0 +1,6 @@
+; $Id$
+name = Infoutilities
+package = "Infomed"
+description = Includes themes, forms and functions that are common to modules from Infomed package.
+core = 6.x
+version = "6.x-1.0"

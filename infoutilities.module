@@ -1,0 +1,915 @@
+<?php
+// $Id$
+/**
+ * @file
+ * Includes themes and functions that are common to infomodules. Page an array, Set one module's permissions.
+ *
+ */
+
+/**
+ * @name Drupal hooks 
+ * @{
+ * Implementation of Drupal hooks in module
+ *
+ */ 
+
+/**
+ * Implementation of hook_help().
+ *
+ * Display help and module information
+ *
+ * @param $path
+ *   which path of the site we're displaying help
+ * @param $arg
+ *   array that holds the current path as would be returned from arg() function
+ * @return
+ *    help text for the path
+ */
+function infoutilities_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#infoutilities":
+      $output = t("Includes themes, forms and functions that are common to modules from Infomed package.");
+      break;
+    case 'admin/modules#description':
+      $output = t("Includes themes, forms and functions that are common to modules from Infomed package.");
+      break;
+    case 'admin/infoutilities/settings/clean_regions':
+      $output = t("There are some modules in the Infomed package that have blocks to show a list of items with a link to see more..., and that when you click on one of their items, its complete information is shown (for example:an event or a post). When making click on see more... or on an item, the information is shown in the content region of the page. In this option you can select the regions that you want to hide when this information is shown.");
+      break;
+  }
+  return $output;
+} 
+
+/**
+ * Implementation of hook_theme()
+ */
+function infoutilities_theme() {
+  return array(
+    'infoutilities_pager' => array(
+      'arguments' => array('tags' => NULL, 'limit' => 10, 'element' => NULL, 'parameters' => array(), 'quantity' => 5),
+      'function' => 'theme_infoutilities_pager',
+    ),
+    'infoutilities_pager_first' => array(
+      'arguments' => array('text' => NULL, 'limit' => NULL, 'element' => NULL, 'parameters' => array()),
+      'function' => 'theme_infoutilities_pager_first',
+    ),
+    'infoutilities_pager_previous' => array(
+      'arguments' => array('text' => NULL, 'limit' => NULL, 'element' => NULL, 'interval' => 1, 'parameters' => array()),
+      'function' => 'theme_infoutilities_pager_previous',
+    ),
+    'infoutilities_pager_next' => array(
+      'arguments' => array('text' => NULL, 'limit' => NULL, 'element' => NULL, 'interval' => 1, 'parameters' => array()),
+      'function' => 'theme_infoutilities_pager_next',
+    ),
+    'infoutilities_pager_last' => array(
+      'arguments' => array('text' => NULL, 'limit' => NULL, 'element' => NULL, 'parameters' => array()),
+      'function' => 'theme_infoutilities_pager_last',
+    ),
+    'infoutilities_pager_link' => array(
+      'arguments' => array('text' => NULL, 'page_new' => NULL, 'element' => NULL, 'parameters' => array(), 'attributes' => array()),
+      'function' => 'theme_infoutilities_pager_link',
+    ),
+    'infoutilities_date_null' => array(
+      'arguments' => array('element' => NULL),
+    ),
+    'infoutilities_date_null_noval' => array(
+      'arguments' => array('element' => NULL),
+    ),
+  );
+}
+/**
+ * Implementation of hook_elements().
+ */
+function infoutilities_elements() {
+  $type['infoutilities_date_null'] = array('#input' => TRUE, '#process' => array('infoutilities_expand_date_null'), '#element_validate' => array('infoutilities_date_null_validate'));
+  $type['infoutilities_date_null_noval'] = array('#input' => TRUE, '#process' => array('infoutilities_expand_date_null'));
+  return $type;
+}
+
+/**
+ * Implementation of hook_perm().
+ *
+ * Valid permissions for this module
+ *
+ * @return array
+ *   An array of valid permissions for the infoutilities module
+ */
+function infoutilities_perm() {
+  return array('administer infoutilities', 'configure infoutilities');
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function infoutilities_menu() {
+  $items = array();
+
+  $items['admin/infoutilities'] = array(
+    'title' => 'Administer Infoutilities',
+    'page callback' => 'infoutilities',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer infoutilities'),
+  );
+  $items['admin/infoutilities/permissions'] = array(
+    'title' => 'Permissions',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('infoutilities_perm_form', 1),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer permissions'),
+    'weight' => -1,
+  );
+  $items['admin/infoutilities/settings'] = array(
+    'title' => 'Settings',
+    'access callback' => 'user_access',
+    'access arguments' => array('configure infoutilities'),
+    'page callback' => 'infoutilities_settings',
+  );
+  $items['admin/infoutilities/settings/clean_regions'] = array(
+    'title' => 'edit clean regions setting',
+    'access callback' => 'user_access',
+    'access arguments' => array('configure infoutilities'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('infoutilities_settings_clean_regions'),
+    'type' => MENU_DEFAULT_LOCAL_TASK
+  );
+  
+  return $items;
+}
+/**
+ * @} End of "Drupal hooks".
+ */
+
+/**
+ * Administration page of infoutilities, shows a list of links to module options
+ */
+function infoutilities() {
+  //igual que system_admin_menu_block_page
+  $item = menu_get_item();
+  $content = system_admin_menu_block($item);
+  $output = theme('admin_block_content', $content);
+  return $output;
+}
+
+/**
+ * Aux function to add current page(as link) to breadcrumb
+ */
+function infoutilities_update_breadcrumb($query = array()) {
+  //actualizar breadcrumbs
+  $breadcrumb = drupal_get_breadcrumb();
+  $add_current = 0;
+  
+  if (!module_exists('menu_breadcrumb') OR
+      (variable_get('menu_breadcrumb_append_node_title', 0) != 1 
+	  && variable_get('menu_breadcrumb_append_node_url', 0) != 1)) {
+    $add_current = 1;
+  } 
+  elseif(variable_get('menu_breadcrumb_append_node_title', 0) == 1 OR 
+         ($query && variable_get('menu_breadcrumb_append_node_url', 0) == 1)){
+    $add_current = 1;
+    //quita la pag actual de los breadcrumbs, pq esta sin link o hay que agregarle query 
+    array_pop($breadcrumb);
+  } 
+
+  if ($add_current){
+    //agrega la pag actual a los breadcrumbs 
+	$item = menu_get_item();
+	if ($query){
+	  $item['localized_options']['query'] = $query;
+	}
+	$title =  drupal_is_front_page() ? t('Home') : $item['title'];
+    $breadcrumb[] = l($title, $item['href'], $item['localized_options']);
+  } 
+  return $breadcrumb;
+}
+
+/**
+ * @name module setings
+ * @{0.
+ * List of module settings
+ */
+/**
+ * Setting page of infoutilities
+ */
+function infoutilities_settings() {
+
+  $header = array(t("Option"), t("Regions"), t("Operations") );
+  //option to set regions that we want to be cleaned when full post or more... are displayed on 'content'
+  $clean_regions = variable_get('infoutilities_clean_regions', array());
+  $regions_str = $clean_regions ? implode (', ', $clean_regions) : t('No regions to clean');
+  $rows[] = array(
+     array("data" => t("Regions to Clean")),
+     array("data" => $regions_str),
+     array("data" => l(t('edit'), "admin/infoutilities/settings/clean_regions"))
+  );
+
+  $output = theme('table', $header, $rows);
+
+  return $output;
+}
+/**
+ * Form to configure clean_regions
+ *
+ * @ingroup forms
+ * @see infoutilities_settings_clean_regions_submit()
+ */
+function infoutilities_settings_clean_regions(&$form_state) {
+
+  // regions to clean
+  $clean_regions = variable_get('infoutilities_clean_regions', array());
+
+  //default theme regions
+  $def_theme = variable_get('theme_default', 'garland');
+  $def_theme_regions = system_region_list($def_theme);
+
+  $form['clean_regions'] = array(
+    '#type' => 'fieldset',
+    '#title' => t("Select which regions do you want to hide when the full list of items or full post or full event are displayed on 'content'."),
+  );
+  //checkbox for each region
+  foreach (array_keys($def_theme_regions) as $region) {
+    $sel = $clean_regions ? in_array($region, $clean_regions) : FALSE;
+	$form['clean_regions'][$region] = array(
+	  '#type' => 'checkbox', 
+	  '#title' => $region, 
+	  '#default_value' => $sel,
+	);
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+
+  return $form;
+}
+/**
+ * Save regions to clean as drupal variable and redirect to settings page
+ */
+function infoutilities_settings_clean_regions_submit($form, &$form_state) {
+
+  $ignore_keys = array('op', 'submit','form_build_id','form_token','form_id');
+  foreach ($form_state['values'] as $key => $sel) {
+    if (!in_array($key, $ignore_keys) && $sel) {
+	  $clean_regions[] =  $key;
+    }
+  }
+  variable_set('infoutilities_clean_regions', $clean_regions);
+  drupal_set_message(t('The changes have been saved.'));
+  
+  cache_clear_all();
+  $form_state['redirect'] = 'admin/infoutilities/settings';
+}
+
+/**
+ * @} End of "module settings".
+ */
+
+/**
+ * @name infoutilities_pager utility
+ * @{
+ *
+ */
+
+/**
+ * Format an array pager.
+ *
+ * Menu callbacks that display paged ws results should call theme('infoutilities_pager') to
+ * retrieve a pager control, so that users can view other results.
+ *
+ * @param $tags
+ *   An array of labels for the controls in the pager.
+ * @param $limit
+ *   The number of ws results to display per page.
+ * @param $element
+ *   An optional integer to distinguish between multiple pagers on one page.
+ * @param $parameters
+ *   An associative array of parameters to append to the pager links.
+ * @param $quantity
+ *   The number of pages in the list.
+ * @return
+ *   An HTML string that generates the pager.
+ *
+ * @ingroup themeable
+ */
+function theme_infoutilities_pager($tags = array(), $limit = 10, $element, $parameters = array(), $quantity = 5) {
+  global $_infoutilities_pager_total, $_infoutilities_pager_page_array;
+  $output = '';
+
+  // Calculate various markers within this pager piece:
+  // Middle is used to "center" pages around the current page.
+  $pager_middle = ceil($quantity / 2);
+  // current is the page we are currently paged to
+  $pager_current = $_infoutilities_pager_page_array[$element] + 1;
+  // first is the first page listed by this pager piece (re quantity)
+  $pager_first = $pager_current - $pager_middle + 1;
+  // last is the last page listed by this pager piece (re quantity)
+  $pager_last = $pager_current + $quantity - $pager_middle;
+  // max is the maximum page number
+  $pager_max = $_infoutilities_pager_total[$element];
+  // End of marker calculations.
+  // Prepare for generation loop.
+  $i = $pager_first;
+  if ($pager_last > $pager_max) {
+    // Adjust "center" if at end of query.
+    $i = $i + ($pager_max - $pager_last);
+    $pager_last = $pager_max;
+  }
+  if ($i <= 0) {
+    // Adjust "center" if at start of query.
+    $pager_last = $pager_last + (1 - $i);
+    $i = 1;
+  }
+  // End of generation loop preparation.
+
+  $li_first = theme('infoutilities_pager_first', (isset($tags[0]) ? $tags[0] : t('« first')), $limit, $element, $parameters);
+  $li_previous = theme('infoutilities_pager_previous', (isset($tags[1]) ? $tags[1] : t('‹ previous')), $limit, $element, 1, $parameters);
+  $li_next = theme('infoutilities_pager_next', (isset($tags[3]) ? $tags[3] : t('next ›')), $limit, $element, 1, $parameters);
+  $li_last = theme('infoutilities_pager_last', (isset($tags[4]) ? $tags[4] : t('last »')), $limit, $element, $parameters);
+
+  if ($_infoutilities_pager_total[$element] > 1) {
+    if ($li_first) {
+      $items[] = array(
+        'class' => 'pager-first',
+        'data' => $li_first,
+      );
+    }
+    if ($li_previous) {
+      $items[] = array(
+        'class' => 'pager-previous',
+        'data' => $li_previous,
+      );
+    }
+
+    // When there is more than one page, create the pager list.
+    if ($i != $pager_max) {
+      if ($i > 1) {
+        $items[] = array(
+          'class' => 'pager-ellipsis',
+          'data' => '…',
+        );
+      }
+      // Now generate the actual pager piece.
+      for (; $i <= $pager_last && $i <= $pager_max; $i++) {
+        if ($i < $pager_current) {
+          $items[] = array(
+            'class' => 'pager-item',
+            'data' => theme('infoutilities_pager_previous', $i, $limit, $element, ($pager_current - $i), $parameters),
+          );
+        }
+        if ($i == $pager_current) {
+          $items[] = array(
+            'class' => 'pager-current',
+            'data' => $i,
+          );
+        }
+        if ($i > $pager_current) {
+          $items[] = array(
+            'class' => 'pager-item',
+            'data' => theme('infoutilities_pager_next', $i, $limit, $element, ($i - $pager_current), $parameters),
+          );
+        }
+      }
+      if ($i < $pager_max) {
+        $items[] = array(
+          'class' => 'pager-ellipsis',
+          'data' => '…',
+        );
+      }
+    }
+    // End generation.
+    if ($li_next) {
+      $items[] = array(
+        'class' => 'pager-next',
+        'data' => $li_next,
+      );
+    }
+    if ($li_last) {
+      $items[] = array(
+        'class' => 'pager-last',
+        'data' => $li_last,
+      );
+    }
+
+    return theme('item_list', $items, NULL, 'ul', array('class' => 'pager'));
+  }
+
+}
+
+/**
+ * @name Pager pieces
+ * @{
+ * Use these pieces to construct your own custom pagers in your theme. Note that
+ * you should NOT modify this file to customize your pager.
+ */
+
+/**
+ * Format a "first page" link.
+ *
+ * @param $text
+ *   The name (or image) of the link.
+ * @param $limit
+ *   The number of ws results to display per page.
+ * @param $element
+ *   An optional integer to distinguish between multiple pagers on one page.
+ * @param $parameters
+ *   An associative array of query string parameters to append to the pager links.
+ * @return
+ *   An HTML string that generates this piece of the pager.
+ *
+ * @ingroup themeable
+ */
+function theme_infoutilities_pager_first($text, $limit, $element, $parameters = array()) {
+  global $_infoutilities_pager_page_array;
+  $output = '';
+
+  // If we are anywhere but the first page
+  if ($_infoutilities_pager_page_array[$element] > 0) {
+    $output = theme('infoutilities_pager_link', $text, infoutilities_pager_load_array(0, $element, $_infoutilities_pager_page_array), $element, $parameters);
+  }
+
+  return $output;
+}
+
+/**
+ * Format a "previous page" link.
+ *
+ * @param $text
+ *   The name (or image) of the link.
+ * @param $limit
+ *   The number of ws results to display per page.
+ * @param $element
+ *   An optional integer to distinguish between multiple pagers on one page.
+ * @param $interval
+ *   The number of pages to move backward when the link is clicked.
+ * @param $parameters
+ *   An associative array of query string parameters to append to the pager links.
+ * @return
+ *   An HTML string that generates this piece of the pager.
+ *
+ * @ingroup themeable
+ */
+function theme_infoutilities_pager_previous($text, $limit, $element, $interval = 1, $parameters = array()) {
+  global $_infoutilities_pager_page_array;
+  $output = '';
+
+  // If we are anywhere but the first page
+  if ($_infoutilities_pager_page_array[$element] > 0) {
+    $page_new = infoutilities_pager_load_array($_infoutilities_pager_page_array[$element] - $interval, $element, $_infoutilities_pager_page_array);
+
+    // If the previous page is the first page, mark the link as such.
+    if ($page_new[$element] == 0) {
+      $output = theme('infoutilities_pager_first', $text, $limit, $element, $parameters);
+    }
+    // The previous page is not the first page.
+    else {
+      $output = theme('infoutilities_pager_link', $text, $page_new, $element, $parameters);
+    }
+  }
+
+  return $output;
+}
+
+/**
+ * Format a "next page" link.
+ *
+ * @param $text
+ *   The name (or image) of the link.
+ * @param $limit
+ *   The number of ws results to display per page.
+ * @param $element
+ *   An optional integer to distinguish between multiple pagers on one page.
+ * @param $interval
+ *   The number of pages to move forward when the link is clicked.
+ * @param $parameters
+ *   An associative array of query string parameters to append to the pager links.
+ * @return
+ *   An HTML string that generates this piece of the pager.
+ *
+ * @ingroup themeable
+ */
+function theme_infoutilities_pager_next($text, $limit, $element, $interval = 1, $parameters = array()) {
+  global $_infoutilities_pager_page_array, $_infoutilities_pager_total;
+  $output = '';
+
+  // If we are anywhere but the last page
+  if ($_infoutilities_pager_page_array[$element] < ($_infoutilities_pager_total[$element] - 1)) {
+    $page_new = infoutilities_pager_load_array($_infoutilities_pager_page_array[$element] + $interval, $element, $_infoutilities_pager_page_array);
+    // If the next page is the last page, mark the link as such.
+    if ($page_new[$element] == ($_infoutilities_pager_total[$element] - 1)) {
+      $output = theme('infoutilities_pager_last', $text, $limit, $element, $parameters);
+    }
+    // The next page is not the last page.
+    else {
+      $output = theme('infoutilities_pager_link', $text, $page_new, $element, $parameters);
+    }
+  }
+
+  return $output;
+}
+
+/**
+ * Format a "last page" link.
+ *
+ * @param $text
+ *   The name (or image) of the link.
+ * @param $limit
+ *   The number of ws results to display per page.
+ * @param $element
+ *   An optional integer to distinguish between multiple pagers on one page.
+ * @param $parameters
+ *   An associative array of query string parameters to append to the pager links.
+ * @return
+ *   An HTML string that generates this piece of the pager.
+ *
+ * @ingroup themeable
+ */
+function theme_infoutilities_pager_last($text, $limit, $element, $parameters = array()) {
+  global $_infoutilities_pager_page_array, $_infoutilities_pager_total;
+  $output = '';
+
+  // If we are anywhere but the last page
+  if ($_infoutilities_pager_page_array[$element] < ($_infoutilities_pager_total[$element] - 1)) {
+    $output = theme('infoutilities_pager_link', $text, infoutilities_pager_load_array($_infoutilities_pager_total[$element] - 1, $element, $_infoutilities_pager_page_array), $element, $parameters);
+  }
+
+  return $output;
+}
+
+/**
+ * Format a link to a specific result page.
+ *
+ * @param $page_new
+ *   The first result to display on the linked page.
+ * @param $element
+ *   An optional integer to distinguish between multiple pagers on one page.
+ * @param $parameters
+ *   An associative array of query string parameters to append to the pager links.
+ * @param $attributes
+ *   An associative array of HTML attributes to apply to a pager anchor tag.
+ * @return
+ *   An HTML string that generates the link.
+ */
+function theme_infoutilities_pager_link($text, $page_new, $element, $parameters = array(), $attributes = array()) {
+  global $_infoutilities_pager_page_array;
+  $infoutilities_pager_new = infoutilities_pager_load_array($page_new[$element], $element, $_infoutilities_pager_page_array);   
+
+  //if ($new_page = implode(',', $infoutilities_pager_new)) {
+
+  foreach ($infoutilities_pager_new as $key => $value) {
+    $new_page_arr[] = $key .'_'. $value;
+  }
+
+  $new_page_module = implode(',', $new_page_arr);
+  $parameters['page'] = $new_page_module; 
+  //}
+
+  $query = array();
+  if (count($parameters)) {
+    $query[] = drupal_query_string_encode($parameters, array());
+  }
+
+  // Set each pager link title
+  if (!isset($attributes['title'])) {
+    static $titles = NULL;
+    if (!isset($titles)) {
+      $titles = array(
+        t('« first') => t('Go to first page'),
+        t('‹ previous') => t('Go to previous page'),
+        t('next ›') => t('Go to next page'),
+        t('last »') => t('Go to last page'),
+      );
+    }
+    if (isset($titles[$text])) {
+      $attributes['title'] = $titles[$text];
+    }
+    else if (is_numeric($text)) {
+      $attributes['title'] = t('Go to page @number', array('@number' => $text));
+    }
+  }
+  
+  return l($text, $_GET['q'], array('attributes' => $attributes, 'query' => count($query) ? implode('&', $query) : NULL));
+
+}
+
+/**
+ * @} End of "Pager pieces".
+ */
+
+/**
+ * Helper function
+ *
+ * Copies $old_array to $new_array and sets $new_array[$element] = $value
+ */
+function infoutilities_pager_load_array($value, $element, $old_array) {
+  $new_array = $old_array;
+  // Update the changed element.
+  $new_array[$element] = (int)$value;
+  return $new_array;
+}
+
+
+/**
+ * Calculates form value using $_GET['page'], $limit and $element
+ * 
+ * @param $limit
+ *   The number of ws results to display per page.
+ * @param $element
+ *   modulename-blockid to distinguish between multiple pagers on one page (for example: infowordpress-1 )
+ * @return
+ *   from value
+ *
+ */
+function infoutilities_pager_get_from($limit = 10, $element = 0) {
+  global $_infoutilities_pager_page_array, $_infoutilities_pager_total;
+  $from = 0;
+
+  $_infoutilities_pager_page_array[$element]=0;
+  if (isset($_GET['page'])) {
+    $page= $_GET['page'];
+
+    // Convert comma-separated $page to an array, used by other functions.
+    $pager_array = explode(',', $page);
+
+    //infoutilities_pager_page_array: array of pages selected at different pagers on one page,
+    //key: module name and block id ; ej: infoscuttle3
+    //value: id of the page selected at the pager
+    foreach ($pager_array as $pg) {
+      list($key, $value) = explode('_', $pg);
+      $_infoutilities_pager_page_array[$key] = $value;
+    }
+    if ( isset($_infoutilities_pager_total[$element]) ) {
+      $_infoutilities_pager_page_array[$element] = max(0, min((int)$_infoutilities_pager_page_array[$element], ((int)$_infoutilities_pager_total[$element]) - 1));
+    }
+    $from = $_infoutilities_pager_page_array[$element] * $limit;
+  }
+  return $from;
+}
+
+/**
+ * Set total results and total pages for the $element key
+ * 
+ * @param $limit
+ *   The number of ws results to display per page.
+ * @param $element
+ *   modulename-blockid to distinguish between multiple pagers on one page (for example: infowordpress-1 )
+ * @param $total
+ *   total of results to paginate.
+ */
+function infoutilities_pager_set_totals($limit = 10, $element = 0, $total) {
+  global $_infoutilities_pager_total, $_infoutilities_pager_total_items;
+  
+  //total of results
+  $_infoutilities_pager_total_items[$element] = $total;
+  
+  // We calculate the total of pages as ceil(items / limit).
+  $_infoutilities_pager_total[$element] = ceil($_infoutilities_pager_total_items[$element] / $limit);
+}
+/**
+ * @} End of "infoutilities_pager utility".
+ */
+
+/**
+ * @name infoutilities_perm_form utility
+ * @{
+ *  
+ */
+/**
+ * Menu callback: form to set permissions to one module.
+ *
+ * @ingroup forms
+ * @see infoutilities_perm_form_submit()
+ */
+function infoutilities_perm_form($form_state, $module) {
+
+  $form['module'] = array(
+    '#type' => 'hidden',
+    '#value' => $module,
+  );
+
+  $result = db_query('SELECT r.rid, p.perm FROM {role} r LEFT JOIN {permission} p ON r.rid = p.rid ORDER BY name');
+
+  // Compile role array:
+  // Add a comma at the end so when searching for a permission, we can
+  // always search for "$perm," to make sure we do not confuse
+  // permissions that are substrings of each other.
+  while ($role = db_fetch_object($result)) {
+    $role_permissions[$role->rid] = $role->perm .',';
+  }
+
+  // Retrieve role names for columns.
+  $role_names = user_roles();
+
+  // Render role/permission overview:
+  $options = array();
+    if ($permissions = module_invoke($module, 'perm')) {
+      $form['permission'][] = array(
+        '#value' => $module, 
+      );
+      asort($permissions);
+      foreach ($permissions as $perm) {
+        $options[$perm] = '';
+        $form['permission'][$perm] = array('#value' => t($perm));
+        foreach ($role_names as $rid => $name) {
+          // Builds arrays for checked boxes for each role
+          if (strpos($role_permissions[$rid], $perm .',') !== FALSE) {
+            $status[$rid][] = $perm;
+          }
+        }
+      }
+    }
+
+  // Have to build checkboxes here after checkbox arrays are built
+  foreach ($role_names as $rid => $name) {
+    $form['checkboxes'][$rid] = array('#type' => 'checkboxes', '#options' => $options, '#default_value' => isset($status[$rid]) ? $status[$rid] : array());
+    $form['role_names'][$rid] = array('#value' => $name, '#tree' => TRUE);
+  }
+  
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save permissions'));
+  
+  $form['#theme'] = 'user_admin_perm';
+  
+  return $form;
+}
+
+function infoutilities_perm_form_submit($form, &$form_state) {
+  // Save permissions:
+  $result = db_query('SELECT * FROM {role}');
+  while ($role = db_fetch_object($result)) {
+    if (isset($form_state['values'][$role->rid])) {
+      //to get all role permissions
+      $permissions = db_fetch_array(db_query('SELECT perm FROM {permission} WHERE rid = %d', $role->rid));
+
+      $arr_perm = explode(', ', $permissions['perm']);
+      //delete permissions of role in module
+      foreach ($arr_perm as $key => $val) {
+        if ( strstr($val, $form_state['values']['module']) ) {
+          unset($arr_perm[$key]);
+        }
+      }
+      //filter role permissions seted by module
+      $form_state['values'][$role->rid] = array_filter($form_state['values'][$role->rid]);
+      //join all role permissions 
+      $arr_perm = array_merge($arr_perm, $form_state['values'][$role->rid]);
+
+      //delete old role permissions
+      db_query('DELETE FROM {permission} WHERE rid = %d', $role->rid);
+
+      //insert new role permissions
+      if (count($arr_perm)) {
+        db_query("INSERT INTO {permission} (rid, perm) VALUES (%d, '%s')", $role->rid, implode(', ', $arr_perm));
+      }
+    }
+  }
+
+  drupal_set_message(t('The changes have been saved.'));
+
+  // Clear the cached pages
+  cache_clear_all();
+}
+
+/**
+ * To delete permisssions setted by a module. Call from uninstall
+ *
+ * @param $module
+ *   module name
+ */
+function infoutilities_perm_delete($module) {
+  $result = db_query('SELECT * FROM {role}');
+  while ($role = db_fetch_object($result)) {
+    //to get all role permissions
+    $permissions = db_fetch_array(db_query('SELECT perm FROM {permission} WHERE rid = %d', $role->rid));
+
+    $arr_perm = explode(', ', $permissions['perm']);
+    //delete permissions of role in module
+    foreach ($arr_perm as $key => $val) {
+      if ( strstr($val, $module) ) {
+        unset($arr_perm[$key]);
+      }
+    }
+
+    //delete old role permissions
+    db_query('DELETE FROM {permission} WHERE rid = %d', $role->rid);
+
+    //insert new role permissions
+    if (count($arr_perm)) {
+      db_query("INSERT INTO {permission} (rid, perm) VALUES (%d, '%s')", $role->rid, implode(', ', $arr_perm));
+    }
+  }
+}
+
+/**
+ * @} End of "infoutilities_perm_form utility".
+ */
+
+/**
+ * Return a themed date, as 3 select (month, day, year), with null option by default
+ *
+ * @param $element
+ *   A form element
+ *
+ */
+function theme_infoutilities_date_null($element) {
+  return theme('date', $element);
+}
+function theme_infoutilities_date_null_noval($element) {
+  return theme('date', $element);
+}
+
+function infoutilities_expand_date_null($element) {
+  $element['#tree'] = TRUE;
+
+  // Determine the order of day, month, year in the site's chosen date format.
+  $format = variable_get('date_format_short', 'm/d/Y - H:i');
+
+  $sort = array();
+  $sort['day'] = max(strpos($format, 'd'), strpos($format, 'j'));
+  $sort['month'] = max(strpos($format, 'm'), strpos($format, 'M'));
+  $sort['year'] = strpos($format, 'Y');
+  asort($sort);
+  $order = array_keys($sort);
+
+  $options= array();
+  // Output multi-selector for date.
+  foreach ($order as $type) {
+    switch ($type) {
+      case 'day':
+        $options = drupal_map_assoc(range(1, 31));
+        break;
+      case 'month':
+        $options = drupal_map_assoc(range(1, 12), 'map_month');
+        break;
+      case 'year':
+        $options = drupal_map_assoc(range(1990, 2050));
+        break;
+    }
+    $options[0] = NULL;
+    ksort($options); 
+
+    if (empty($element['#default_value'])) {
+      $element['#default_value'] = array('day' => 0, 'month' => 0, 'year' => 0);
+    }
+    $parents = $element['#parents'];
+    $parents[] = $type;
+    $element[$type] = array(
+      '#type' => 'select',
+      '#default_value' => $element['#default_value'][$type],
+      '#attributes' => $element['#attributes'],
+      '#options' => $options,
+    );
+  }
+
+  return $element;
+}
+/* Validates the date type to stop dates like February 30, 2006.
+ * Allows null dates
+ */
+function infoutilities_date_null_validate($form) {
+  if ($form['#value']['month'] or $form['#value']['day'] or $form['#value']['year'] ) {
+     date_validate($form);
+  }
+}
+
+/* Return a list of regions for current theme
+ *
+ */
+function infoutilities_regions() {
+
+  $def_theme = variable_get('theme_default', 'garland');
+  $block_regions = system_region_list($def_theme);
+  
+  return $block_regions;
+}
+
+/**
+ * Implementation of hook_form_alter(). Performs alterations before a form
+ * is rendered.
+ */
+function infoutilities_form_alter(&$form, $form_state, $form_id) {
+  if ($form_id == 'boost_block_db_settings_form') {
+    unset($form['boost_db_settings']['push'], $form['boost_db_settings']['selection'], $form['boost_db_rm_settings']);
+  }
+  if ($form_id == 'menu_edit_item') {
+    $form['#validate'][] = 'infoutilities_edit_item_validate';
+  }
+}
+
+function infoutilities_edit_item_validate($form, &$form_state) {
+  if (trim($form_state['values']['menu']['link_path']) == 'admin/build/menu/item/'.$form_state['values']['menu']['mlid'].'/edit') {
+    form_set_error('', t('invalid item.'));
+  }
+}
+
+function infoutilities_breadcrumb_title($title, $len = 60){
+  $bc_title = $title;
+  if(strlen($title) > $len){ //cut title to add to breadcrumb
+       $bc_title = substr($title, 0, $len);
+	$last_space = strpos(strrev($bc_title),' ');
+	if($last_space){
+	  $bc_title = substr($bc_title, 0, -1*$last_space);
+	}  
+	$bc_title .= '...';
+  }
+  return $bc_title;
+}
+
